@@ -1,4 +1,4 @@
-ass
-numpy
-colour-science
-pyinstaller
+ass~=0.5.0
+numpy~=1.26.4
+colour-science~=0.4.0,>=0.4.4
+pyinstaller~=6.4.0

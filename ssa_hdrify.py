@@ -10,10 +10,20 @@ from tkinter import Tk, filedialog
 import ass as ssa
 import colour
 import numpy as np
-from colour.models import (RGB_COLOURSPACE_BT2020, RGB_COLOURSPACE_DCI_P3,
-                           RGB_COLOURSPACE_sRGB)
+from colour import RGB_Colourspace
+from colour.models import eotf_inverse_BT2100_PQ, sRGB_to_XYZ, XYZ_to_xyY, xyY_to_XYZ, XYZ_to_RGB, \
+    RGB_COLOURSPACE_BT2020, eotf_BT2100_PQ
 
-D65_ILLUMINANT = RGB_COLOURSPACE_sRGB.whitepoint
+COLOURSPACE_BT2100_PQ = RGB_Colourspace(
+    name='COLOURSPACE_BT2100',
+    primaries=RGB_COLOURSPACE_BT2020.primaries,
+    whitepoint=RGB_COLOURSPACE_BT2020.whitepoint,
+    matrix_RGB_to_XYZ=RGB_COLOURSPACE_BT2020.matrix_RGB_to_XYZ,
+    matrix_XYZ_to_RGB=RGB_COLOURSPACE_BT2020.matrix_XYZ_to_RGB,
+    cctf_encoding=eotf_inverse_BT2100_PQ,
+    cctf_decoding=eotf_BT2100_PQ,
+)
+"""HDR color space on display side."""
 
 
 def files_picker() -> list[str]:
@@ -41,39 +51,44 @@ def apply_oetf(source: list[float], luma: float):
     else:
         # linear mix between 0.1 and 0.2
         pq_mix_ratio = (np.clip(luma, 0.1, 0.2) - 0.1) / 0.1
-        return hlg_result * (1-pq_mix_ratio) + pq_result * pq_mix_ratio
+        return hlg_result * (1 - pq_mix_ratio) + pq_result * pq_mix_ratio
+
 
 def sRgbToHdr(source: tuple[int, int, int]) -> tuple[int, int, int]:
     """
-    大致思路：先做gamma correction，然后转入XYZ。 在xyY内将Y的极值由sRGB亮度调为输出
-    亮度，然后转回输出色域的RGB。
+    Convert RGB color in SDR color space to HDR color space.
+
+    How it works:
+     1. Convert the RGB color to reference xyY color space to get absolute chromaticity and linear luminance response
+     2. Time the target brightness of SDR color space to the Y because Rec.2100 has an absolute luminance
+     3. Convert the xyY color back to RGB under Rec.2100/Rec.2020 color space.
+
+    Notes:
+     -  Unlike sRGB and Rec.709 color space which have their OOTF(E) = EOTF(OETF(E)) equals or almost equals to y = x,
+        it's OOTF is something close to gamma 2.4. Therefore, to have matched display color for color in SDR color space
+        the COLOURSPACE_BT2100_PQ denotes a display color space rather than a scene color space. It wasted me quite some
+        time to figure that out :(
+     -  Option to set output luminance is removed because PQ has an absolute luminance level, which means any color in
+        the Rec.2100 color space will be displayed the same on any accurate display regardless of the capable peak
+        brightness of the device if no clipping happens. Therefore, the peak brightness should always target 10000 nits
+        so the SDR color can be accurately projected to the sub-range of Rec.2100 color space
     args:
     colour -- (0-255, 0-255, 0-255)
     """
-    if source == (0, 0, 0):
-        return (0, 0, 0)
-
     args = parse_args()
     srgb_brightness = args.sub_brightness
-    screen_brightness = args.output_brightness
-    target_colourspace = RGB_COLOURSPACE_BT2020
-    if args.colourspace == 'dcip3':
-        target_colourspace = RGB_COLOURSPACE_DCI_P3
 
-    normalized_source = np.array(source) / 255
-    linear_source = colour.oetf_inverse(normalized_source, 'ITU-R BT.709')
-    xyz = colour.RGB_to_XYZ(linear_source, RGB_COLOURSPACE_sRGB.whitepoint,
-                            D65_ILLUMINANT,
-                            RGB_COLOURSPACE_sRGB.matrix_RGB_to_XYZ)
-    xyy = colour.XYZ_to_xyY(xyz)
-    srgb_luma = xyy[2]
-    xyy[2] = xyy[2] * srgb_brightness / screen_brightness
-    xyz = colour.xyY_to_XYZ(xyy)
-    output = colour.XYZ_to_RGB(xyz, D65_ILLUMINANT,
-                               target_colourspace.whitepoint,
-                               target_colourspace.matrix_XYZ_to_RGB)
-    output = apply_oetf(output, srgb_luma)
-    output = np.trunc(output * 255)
+    normalized_sdr_color = np.array(source) / 255
+    xyY_sdr_color = XYZ_to_xyY(sRGB_to_XYZ(normalized_sdr_color, apply_cctf_decoding=True))
+
+    xyY_hdr_color = xyY_sdr_color.copy()
+    target_luminance = xyY_sdr_color[2] * srgb_brightness
+    xyY_hdr_color[2] = target_luminance
+
+    output = XYZ_to_RGB(xyY_to_XYZ(xyY_hdr_color), colourspace=COLOURSPACE_BT2100_PQ, apply_cctf_encoding=True)
+
+    output = np.round(output * 255)
+
     return (int(output[0]), int(output[1]), int(output[2]))
 
 
@@ -139,22 +154,6 @@ def parse_args():
                         help=("设置字幕最大亮度，纯白色字幕将被映射为该亮度。"
                               "(默认: %(default)s)"),
                         default=100)
-
-    parser.add_argument('-o',
-                        '--output-brightness',
-                        metavar='val',
-                        type=int,
-                        help=("设置输出屏幕最大亮度。"
-                              "(默认: %(default)s)"),
-                        default=1000)
-    parser.add_argument('-c',
-                        '--colourspace',
-                        metavar='{dcip3,bt2020}',
-                        type=str,
-                        help=('选择输出的色彩空间。可用值为 dcip3 和 bt2020。'
-                              '(默认: %(default)s)'),
-                        default='bt2020')
-
     parser.add_argument('-f',
                         '--file',
                         metavar='path',
@@ -162,20 +161,7 @@ def parse_args():
                         help=('输入字幕文件。可重复添加。'),
                         action='append')
 
-    parser.add_argument('-g',
-                        '--gamma',
-                        metavar='{pq,hlg,hybrid}',
-                        type=str,
-                        help=('选择输出时使用的gamma函数。可用值为  (默认: %(default)s)\n'
-                              'pq: 大部分视频均使用pq压制，但hybrid字幕效果可能更好\n'
-                              'hlg: 视频为hlg时应使用hlg模式\n'
-                              'hybrid: 实验性。在纯pq时容易导致低亮度字幕过亮，hybrid模式在低亮度时使用hlg，'
-                              '高亮度时使用pq。\n'),
-                        default='pq')
-
     args = parser.parse_args()
-
-    args.output_brightness
 
     return args
 
@@ -188,4 +174,5 @@ if __name__ == '__main__':
     for f in files:
         ssaProcessor(f)
 
-    input("按回车键退出……...")
+    print("Press Enter to exit...")
+    input("按回车键退出...")
