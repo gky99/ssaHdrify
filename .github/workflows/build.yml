@@ -41,7 +41,7 @@ jobs:
 
       - name: Build
         run: |
-          pyinstaller -F ssa_hdrify.py
+          pyinstaller -y ssa_hdrify_bundle.spec
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
