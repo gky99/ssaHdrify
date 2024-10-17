@@ -43,8 +43,16 @@ jobs:
         run: |
           pyinstaller -y ssa_hdrify_bundle.spec
 
-      - name: Upload Build Artifact
+      - name: Windows/Linux upload Build Artifact
+        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           name: ssa-hdrify-${{ matrix.os }}
           path: dist
+
+      - name: Mac upload Build Artifact
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ssa-hdrify-${{ matrix.os }}
+          path: dist/ssa hdrify.app
