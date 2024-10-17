@@ -44,7 +44,7 @@ jobs:
           pyinstaller -F ssa_hdrify.py
 
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: ssa-hdrify-${{ matrix.os }}
           path: dist
