@@ -29,7 +29,7 @@
 
 ## 使用方法
 
-下载最新的[发行版](https://github.com/yyymeow/ssaHdrify/releases)
+下载最新的[发行版](https://github.com/gky99/ssaHdrify/releases)
 
 ### 简易版
 
@@ -83,7 +83,7 @@ It's not suitable for anything that requires colour accuracy, e.g. subtitle colo
 
 ## How to use
 
-Download the latest [release](https://github.com/yyymeow/ssaHdrify/releases)
+Download the latest [release](https://github.com/gky99/ssaHdrify/releases)
 
 ### Simple guide
 
@@ -106,3 +106,8 @@ The script supports some simple command line options. All arguments are optional
   * Subtitle files. A popup will be used if this is missing.
   
     You can add multiple files by using multiple -f flags.
+
+
+## Credit
+
+<a href="https://www.flaticon.com/free-icons/hdr" title="hdr icons">Hdr icons created by Freepik - Flaticon</a>
