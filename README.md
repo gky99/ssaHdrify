@@ -10,6 +10,7 @@
 
 短期内最简单的做法就是手工调整字幕的饱和度和亮度，达到不闪瞎狗眼的目的。
 
+
 本脚本进行的操作如下
 
 * 读取SSA文件并对颜色依次进行处理
@@ -28,7 +29,7 @@
 
 ## 使用方法
 
-下载最新的[发行版](https://github.com/yyymeow/ssaHdrify/releases)
+下载最新的[发行版](https://github.com/gky99/ssaHdrify/releases)
 
 ### 简易版
 
@@ -85,7 +86,7 @@ It's not suitable for anything that requires colour accuracy, e.g. subtitle colo
 
 ## How to use
 
-Download the latest [release](https://github.com/yyymeow/ssaHdrify/releases)
+Download the latest [release](https://github.com/gky99/ssaHdrify/releases)
 
 ### Simple guide
 
@@ -109,3 +110,7 @@ The script supports some simple command line options. All arguments are optional
 
       You can add multiple files by using multiple -f flags.
 
+
+## Credit
+
+<a href="https://www.flaticon.com/free-icons/hdr" title="hdr icons">Hdr icons created by Freepik - Flaticon</a>
