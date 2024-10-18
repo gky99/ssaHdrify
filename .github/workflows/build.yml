@@ -41,7 +41,7 @@ jobs:
 
       - name: Build
         run: |
-          pyinstaller -y ssa_hdrify_bundle.spec
+          pyinstaller -y ssa_hdrify.spec
 
       - name: Mac clean up dist folder
         if: matrix.os == 'macos-latest'
