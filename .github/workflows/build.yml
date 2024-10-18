@@ -2,9 +2,9 @@ name: Build-dist
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build:
@@ -14,38 +14,41 @@ jobs:
         os: [macos-latest, windows-latest, ubuntu-latest]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set Up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-        
-    - name: Display Python version
-      run: python -c "import sys; print(sys.version)"
+      - uses: actions/checkout@v4
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
 
-    - name: Windows dependency
-      if: matrix.os == 'windows-latest'
-      run: |
-        python -m pip install --upgrade pip
-        if (Test-Path requirements.txt -PathType leaf) {
-          pip install -r requirements.txt
-        }
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
 
-    - name: Mac/Linux dependency
-      if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then
+      - name: Windows dependency
+        if: matrix.os == 'windows-latest'
+        run: |
+          python -m pip install --upgrade pip
+          if (Test-Path requirements.txt -PathType leaf) {
             pip install -r requirements.txt
-        fi
-      
-    
-    - name: Build
-      run: |
-        pyinstaller -F ssa_hdrify.py
+          }
 
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v1
-      with:
-        name: ssa-hdrify-${{ matrix.os }}
-        path: dist
+      - name: Mac/Linux dependency
+        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+              pip install -r requirements.txt
+          fi
+
+      - name: Build
+        run: |
+          pyinstaller -y ssa_hdrify.spec
+
+      - name: Mac clean up dist folder
+        if: matrix.os == 'macos-latest'
+        run: rm -rf dist/ssa_hdrify
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ssa-hdrify-${{ matrix.os }}
+          path: dist
