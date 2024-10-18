@@ -1,5 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import platform
+OS_TYPE = platform.system()
 
 a = Analysis(
     ['ssa_hdrify.py'],
@@ -26,7 +28,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
+    console=(OS_TYPE != "Darwin"),
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
