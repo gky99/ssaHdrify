@@ -39,9 +39,15 @@ jobs:
               pip install -r requirements.txt
           fi
 
-      - name: Build
+      - name: Windows Build
+        if: matrix.os == 'windows-latest'
         run: |
           pyinstaller -y ssa_hdrify.spec
+
+      - name: Mac/Linux Build
+        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+        run: |
+          pyinstaller -y ssa_hdrify.spec -- --app-version=$(<VERSION)
 
       - name: Mac clean up dist folder
         if: matrix.os == 'macos-latest'

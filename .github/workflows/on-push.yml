@@ -1,0 +1,16 @@
+name: On push
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - VERSION
+
+jobs:
+  versioning:
+    uses: ./.github/workflows/add-tag.yml
+    permissions:
+      contents: write
+    with:
+      version_file: VERSION

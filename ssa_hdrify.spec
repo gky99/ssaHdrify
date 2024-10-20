@@ -1,7 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
-
+import argparse
 import platform
+
 OS_TYPE = platform.system()
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--app-version", action="store", default="0.0.1")
+options = parser.parse_args()
 
 a = Analysis(
     ['ssa_hdrify.py'],
@@ -50,4 +55,5 @@ app = BUNDLE(
     name='ssa hdrify.app',
     icon='hdr.icns',
     bundle_identifier='ssa hdrify',
+    version=options.app_version
 )
