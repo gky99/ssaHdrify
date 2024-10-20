@@ -40,7 +40,6 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=['hdr.icns'],
-    version='VERSION'
 )
 coll = COLLECT(
     exe,
