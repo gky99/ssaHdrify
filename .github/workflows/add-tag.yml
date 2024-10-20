@@ -1,0 +1,28 @@
+name: Add version tag to commit based on version file
+on:
+  workflow_call:
+    inputs:
+      version_file:
+        type: string
+        description: path to the version file
+        required: true
+
+jobs:
+  add-version-tag:
+    name: Add version tag
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Info
+        run: |
+          echo Using version file ${{inputs.version_file}}
+          echo Version: $(<${{inputs.version_file}})
+
+      - name: Update tag
+        run: git tag $(<${{inputs.version_file}}) -f
+
+      - name: Push tag
+        run: git push origin --tags -f
