@@ -7,7 +7,7 @@ from ui.Root import Root
 
 if __name__ == '__main__':
     root = Root()
-    icon = Image.open(path.abspath(path.join(path.dirname(__file__), 'asset/hdr.ico')))
+    icon = Image.open(path.abspath(path.join(path.dirname(__file__), 'asset/hdr.png')))
     root.wm_iconphoto(False, ImageTk.PhotoImage(icon))
 
     with redirect_stderr(root.textFrame.messageStream):

@@ -1,3 +1,4 @@
+import platform
 import tkinter
 from tkinter import Tk
 from tkinter.ttk import Style
@@ -6,12 +7,21 @@ from ui.MessageFrame import MessageFrame
 from ui.OptionFrame import OptionFrame
 
 
+def setStyle():
+    sys_name = platform.system()
+    tk_style = Style()
+    if sys_name == 'Windows':
+        tk_style.theme_use('vista')
+    elif sys_name == 'Darwin':
+        tk_style.theme_use('aqua')
+    return
+
+
 class Root(Tk):
     def __init__(self):
         super().__init__()
         self.title("Convert subtitle from SDR to HDR colorspace")
-        tk_style = Style()
-        tk_style.theme_use('vista')
+        setStyle()
         self.wm_minsize(640, 480)
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
