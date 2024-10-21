@@ -12,8 +12,6 @@ def setStyle():
     tk_style = Style()
     if sys_name == 'Windows':
         tk_style.theme_use('vista')
-    elif sys_name == 'Darwin':
-        tk_style.theme_use('aqua')
     return
 
 

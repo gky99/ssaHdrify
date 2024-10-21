@@ -7,13 +7,11 @@ from conversion_setting import config
 
 def validateBrightness(newBrightness):
     valid = re.match('^[0-9]*$', newBrightness) is not None
-    print(f"Validate: {newBrightness}")
     if valid:
         if len(newBrightness) == 0:
             config.targetBrightness = 0
         else:
             config.targetBrightness = min(int(newBrightness), 10000)
-        print(config.targetBrightness)
         return True
     else:
         return False
@@ -31,6 +29,6 @@ class BrightnessOption(Frame):
         self.target_brightness_var.set(config.targetBrightness)
         validate_brightness_wrapper = (master.register(validateBrightness), '%P')
         target_brightness_input = Entry(master=self, textvariable=self.target_brightness_var, validate="key",
-                                      validatecommand=validate_brightness_wrapper)
+                                        validatecommand=validate_brightness_wrapper)
 
         target_brightness_input.grid(row=0, column=1, sticky=tkinter.EW)
