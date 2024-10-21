@@ -22,4 +22,4 @@ class MessageFrame(LabelFrame):
         self.text.config(state=tkinter.DISABLED)
 
         self.messagePointer = self.messageStream.tell()
-        self.callbackId = self.after(1000, self.updateText)
+        self.callbackId = self.after(500, self.updateText)
