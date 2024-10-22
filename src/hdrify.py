@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-import argparse
 import os
 import re
-from tkinter import Tk, filedialog
 
 import ass as ssa
-import colour
 import numpy as np
 from colour import RGB_Colourspace
 from colour.models import eotf_inverse_BT2100_PQ, sRGB_to_XYZ, XYZ_to_xyY, xyY_to_XYZ, XYZ_to_RGB, \
     RGB_COLOURSPACE_BT2020, eotf_BT2100_PQ
+
+from conversion_setting import config
 
 COLOURSPACE_BT2100_PQ = RGB_Colourspace(
     name='COLOURSPACE_BT2100',
@@ -26,32 +25,24 @@ COLOURSPACE_BT2100_PQ = RGB_Colourspace(
 """HDR color space on display side."""
 
 
-def files_picker() -> list[str]:
-    """询问用户并返回字幕文件"""
-    root = Tk()
-    root.withdraw()
-    return filedialog.askopenfilenames(filetypes=[('ASS files', '.ass .ssa'),
-                                                  ('all files', '.*')])
-
-
-def apply_oetf(source: list[float], luma: float):
-    """
-    args:
-    source: linear RGB tuple (0-1, 0-1, 0-1)
-    luma: luma value for the ORIGINAL sRGB colour.
-    """
-    args = parse_args()
-    pq_result = colour.oetf(source, 'ITU-R BT.2100 PQ')
-    hlg_result = colour.oetf(source, 'ITU-R BT.2100 HLG')
-
-    if args.gamma == 'pq':
-        return pq_result
-    elif args.gamma == 'hlg':
-        return hlg_result
-    else:
-        # linear mix between 0.1 and 0.2
-        pq_mix_ratio = (np.clip(luma, 0.1, 0.2) - 0.1) / 0.1
-        return hlg_result * (1 - pq_mix_ratio) + pq_result * pq_mix_ratio
+# def apply_oetf(source: list[float], luma: float):
+#     """
+#     args:
+#     source: linear RGB tuple (0-1, 0-1, 0-1)
+#     luma: luma value for the ORIGINAL sRGB colour.
+#     """
+#     args = parse_args()
+#     pq_result = colour.oetf(source, 'ITU-R BT.2100 PQ')
+#     hlg_result = colour.oetf(source, 'ITU-R BT.2100 HLG')
+#
+#     if args.gamma == 'pq':
+#         return pq_result
+#     elif args.gamma == 'hlg':
+#         return hlg_result
+#     else:
+#         # linear mix between 0.1 and 0.2
+#         pq_mix_ratio = (np.clip(luma, 0.1, 0.2) - 0.1) / 0.1
+#         return hlg_result * (1 - pq_mix_ratio) + pq_result * pq_mix_ratio
 
 
 def sRgbToHdr(source: tuple[int, int, int]) -> tuple[int, int, int]:
@@ -75,8 +66,7 @@ def sRgbToHdr(source: tuple[int, int, int]) -> tuple[int, int, int]:
     args:
     colour -- (0-255, 0-255, 0-255)
     """
-    args = parse_args()
-    srgb_brightness = args.sub_brightness
+    srgb_brightness = config.targetBrightness
 
     normalized_sdr_color = np.array(source) / 255
     xyY_sdr_color = XYZ_to_xyY(sRGB_to_XYZ(normalized_sdr_color, apply_cctf_decoding=True))
@@ -143,36 +133,3 @@ def ssaProcessor(fname: str):
     with open(output_fname, 'w', encoding='utf_8_sig') as f:
         sub.dump_file(f)
         print(f'Wrote {output_fname}')
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s',
-                        '--sub-brightness',
-                        metavar='val',
-                        type=int,
-                        help=("设置字幕最大亮度，纯白色字幕将被映射为该亮度。"
-                              "(默认: %(default)s)"),
-                        default=100)
-    parser.add_argument('-f',
-                        '--file',
-                        metavar='path',
-                        type=str,
-                        help=('输入字幕文件。可重复添加。'),
-                        action='append')
-
-    args = parser.parse_args()
-
-    return args
-
-
-if __name__ == '__main__':
-    args = parse_args()
-    files = args.file
-    if not files:
-        files = files_picker()
-    for f in files:
-        ssaProcessor(f)
-
-    print("Press Enter to exit...")
-    input("按回车键退出...")

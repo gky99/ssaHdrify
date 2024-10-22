@@ -9,10 +9,10 @@ parser.add_argument("--app-version", action="store", default="0.0.1")
 options = parser.parse_args()
 
 a = Analysis(
-    ['ssa_hdrify.py'],
+    ['src/main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('src/asset/*', "asset")],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -33,7 +33,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=(OS_TYPE != "Darwin"),
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
