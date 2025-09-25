@@ -28,7 +28,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='ssa_hdrify',
+    name='ssa hdrify',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
