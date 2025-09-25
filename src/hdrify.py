@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import os
 import re
+from io import StringIO
 
 import ass as ssa
 import numpy as np
-from colour import RGB_Colourspace
+from charset_normalizer import from_bytes
+from colour import RGB_Colourspace, RGB_to_XYZ, XYZ_to_sRGB
 from colour.models import eotf_inverse_BT2100_PQ, sRGB_to_XYZ, XYZ_to_xyY, xyY_to_XYZ, XYZ_to_RGB, \
     RGB_COLOURSPACE_BT2020, eotf_BT2100_PQ
 
@@ -116,20 +118,23 @@ def ssaProcessor(fname: str):
         print(f'Missing file: {fname}')
         return
 
-    with open(fname, encoding='utf_8_sig') as f:
-        sub = ssa.parse(f)
-    for s in sub.styles:
-        transformColour(s.primary_color)
-        transformColour(s.secondary_color)
-        transformColour(s.outline_color)
-        transformColour(s.back_color)
+    with open(fname, 'rb') as undetectedStringFile:
+        detected = from_bytes(undetectedStringFile.read())
+        content = detected.best()
+        sub = ssa.parse(StringIO(str(content)))
 
-    for e in sub.events:
-        transformEvent(e)
+        for s in sub.styles:
+            transformColour(s.primary_color)
+            transformColour(s.secondary_color)
+            transformColour(s.outline_color)
+            transformColour(s.back_color)
 
-    output_fname = os.path.splitext(fname)
-    output_fname = output_fname[0] + '.hdr.ass'
+        for e in sub.events:
+            transformEvent(e)
 
-    with open(output_fname, 'w', encoding='utf_8_sig') as f:
-        sub.dump_file(f)
-        print(f'Wrote {output_fname}')
+        output_fname = os.path.splitext(fname)
+        output_fname = output_fname[0] + '.hdr.ass'
+
+        with open(output_fname, 'w', encoding='utf_8_sig') as f:
+            sub.dump_file(f)
+            print(f'Wrote {output_fname}')
