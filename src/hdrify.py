@@ -9,7 +9,7 @@ from io import StringIO
 import ass as ssa
 import numpy as np
 from charset_normalizer import from_bytes
-from colour import RGB_Colourspace, RGB_to_XYZ, XYZ_to_sRGB
+from colour import RGB_Colourspace
 from colour.models import eotf_inverse_BT2100_PQ, sRGB_to_XYZ, XYZ_to_xyY, xyY_to_XYZ, XYZ_to_RGB, \
     RGB_COLOURSPACE_BT2020, eotf_BT2100_PQ
 
@@ -87,30 +87,31 @@ def sRgbToHdr(source: tuple[int, int, int]) -> tuple[int, int, int]:
 def transformColour(colour):
     rgb = (colour.r, colour.g, colour.b)
     transformed = sRgbToHdr(rgb)
+    # TODO process alpha channel in styles
     colour.r = transformed[0]
     colour.g = transformed[1]
     colour.b = transformed[2]
 
 
+def eventColorReplacer(match):
+    prefix = match.group(1)
+    hex_colour = match.group(2)
+
+    alpha = hex_colour[:2] if len(hex_colour) == 8 else ''
+    hex_colour = hex_colour[2:] if len(hex_colour) == 8 else hex_colour
+    hex_colour.rjust(6, '0')
+    b = int(hex_colour[0:2], 16)
+    g = int(hex_colour[2:4], 16)
+    r = int(hex_colour[4:6], 16)
+
+    (r, g, b) = sRgbToHdr((r, g, b))
+    return prefix + alpha + '{:02x}{:02x}{:02x}'.format(b, g, r)
+
+
 def transformEvent(event):
     line = event.text
-    matches = []
-    for match in re.finditer(r'\\[0-9]?c&H([0-9a-fA-F]{2,})&', line):
-        start = match.start(1)
-        end = match.end(1)
-        hex_colour = match.group(1)
-        hex_colour.rjust(6, '0')
-        b = int(hex_colour[0:2], 16)
-        g = int(hex_colour[2:4], 16)
-        r = int(hex_colour[4:6], 16)
-        (r, g, b) = sRgbToHdr((r, g, b))
-        hex_colour = '{:02x}{:02x}{:02x}'.format(b, g, r)
-        matches.append((start, end, hex_colour.upper()))
-
-    for start, end, hex_colour in matches:
-        line = line[:start] + hex_colour + line[end:]
-
-    event.text = line
+    new_line = re.sub(r'(\\[0-9]?c&H)([0-9a-fA-F]{2,})(?=[&})\\])', eventColorReplacer, line)
+    event.text = new_line
 
 
 def ssaProcessor(fname: str):
